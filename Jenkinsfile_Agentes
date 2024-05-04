@@ -7,7 +7,7 @@ pipeline {
             steps {
                 bat 'hostname'
                 echo WORKSPACE
-                git 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git'
+                git branch: 'develop_Javier', url: 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git'
                 bat 'dir'
                 stash(name: 'RepositorioGit', includes: '**')
             }
