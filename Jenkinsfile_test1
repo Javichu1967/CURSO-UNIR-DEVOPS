@@ -4,9 +4,7 @@ pipeline {
     stages {
         stage('Get Code') {
             steps {
-                //Obtener código del repositorio GitHub
-                git 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git' //es un comando de Jenkins.
-                // bat 'git Clone <URL> .' --> es un comando del sistema operativo.
+                git branch: 'develop_Javier', url: 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git'
             }
         }
 
