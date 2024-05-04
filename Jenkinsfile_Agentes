@@ -1,0 +1,66 @@
+pipeline {
+    agent none //Por defecto no hay ningún agente
+    
+    stages {
+        stage('Windows'){
+            agent {label 'Agente_Principal'}
+            steps {
+                bat 'hostname'
+                echo WORKSPACE
+                git 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git'
+                bat 'dir'
+                stash(name: 'RepositorioGit', includes: '**')
+            }
+        }
+        
+        stage ('Test') {
+            parallel { //Para que se ejecute en paralelo
+                stage('LinuxA'){
+                    agent {label 'Agente_Secundario1'} 
+                    steps {
+                        echo 'Hello World'
+                        echo WORKSPACE
+                        bat '''
+                            hostname
+                            ver 
+                            whoami
+                        '''
+                        unstash 'RepositorioGit'
+                        bat 'dir'
+                        catchError(message:'ErrorUnit',buildResult:'UNSTABLE',stageResult:'UNSTABLE') {
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%
+                                C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/pytest.exe --junitxml=result-unit.xml test/unit
+                            '''
+                        }
+                    }
+                }
+        
+                stage('LinuxB'){
+                    agent {label 'Agente_Secundario2'}
+                    steps {
+                        echo 'Hello World'
+                        echo WORKSPACE
+                        bat '''
+                            hostname
+                            ver
+                            whoami
+                        '''
+                        unstash 'RepositorioGit'
+                        bat 'dir'
+                        catchError(message:'ErrorRest',buildResult:'UNSTABLE',stageResult:'UNSTABLE') {
+                            bat '''
+                                set FLASK_APP=app\\api.py
+                                start C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/flask run
+                                start java -jar "C:/JAVIER/Curso KSchool/INSTALACIONES/Wiremock/wiremock-standalone-3.5.4.jar" --port 9090 --verbose --root-dir test/wiremock
+                                
+                                set PYTHONPATH=%WORKSPACE%
+                                C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/pytest.exe --junitxml=result-rest.xml test/rest
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
