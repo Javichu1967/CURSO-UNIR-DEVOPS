@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Get Code') {
+            steps {
+                //Obtener código del repositorio GitHub
+                git 'https://github.com/Javichu1967/CURSO-UNIR-DEVOPS.git' //es un comando de Jenkins.
+                // bat 'git Clone <URL> .' --> es un comando del sistema operativo.
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo 'Eyyyyyyy, esto es Python. No hay que copiar nada'
+                echo WORKSPACE
+                bat 'dir'
+            }
+        }
+        
+        stage ('Test') {
+            parallel { //Para que se ejecute en paralelo
+                stage('Unit') {
+                    steps {
+                        catchError(message:'ErrorUnit',buildResult:'UNSTABLE',stageResult:'UNSTABLE') {
+                            bat '''
+                                set PYTHONPATH=%WORKSPACE%
+                                C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/pytest.exe --junitxml=result-unit.xml test/unit
+                            '''
+                        }
+                    }
+                }
+        
+                stage('Rest') {
+                    steps {
+                        bat '''
+                            set FLASK_APP=app\\api.py
+                            start C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/flask run
+                            start java -jar "C:/JAVIER/Curso KSchool/INSTALACIONES/Wiremock/wiremock-standalone-3.5.4.jar" --port 9090 --verbose --root-dir test/wiremock
+                            
+                            set PYTHONPATH=%WORKSPACE%
+                            C:/Users/javie/AppData/Local/Programs/Python/Python311/Scripts/pytest.exe --junitxml=result-rest.xml test/rest
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Result') {
+            steps {
+                junit 'result*.xml'
+                echo 'ESO ES TODO AMIGOS!!'
+            }
+        }
+
+    }
+}
